@@ -91,19 +91,12 @@ def image_download(search_text:str, num_images:int, label:str=None, engine:str='
     assert engine=='google' or engine=='bing' or engine=='all' or 'flickr', "usage: -engine=['google'|'bing'|'all','flickr']"
     if label is None: label = search_text
     path = Path.cwd()/image_dir/label
-    if Path.exists(path):
-        response = input(f"'{label}' exists. Overwrite? [Y/n]: ")
-        if response is 'Y':
-            shutil.rmtree(path)
-        else:
-            print(f"'{label}' unchanged", end='\r')
-            return
     if engine == 'google':
-        start_crawler(GoogleImageCrawler, path, search_text, num_images)
+        start_crawler(GoogleImageCrawler, path, search_text, num_images, file_idx_offset='auto')
     elif engine == 'bing':
-        start_crawler(BingImageCrawler, path, search_text, num_images)
+        start_crawler(BingImageCrawler, path, search_text, num_images, file_idx_offset='auto')
     elif engine == 'all':
-        start_crawler(GoogleImageCrawler, path, search_text, num_images)
+        start_crawler(GoogleImageCrawler, path, search_text, num_images, file_idx_offset='auto')
         start_crawler(BingImageCrawler, path, search_text, num_images, file_idx_offset='auto')
     elif engine == 'flickr':
         start_flickr_crawler(path, search_text, num_images, apikey)
