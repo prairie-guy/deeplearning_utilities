@@ -11,6 +11,8 @@
 
 import os, sys, shutil
 from pathlib import Path
+from glob import glob
+import mimetypes
 import hashlib, magic
 import icrawler
 from icrawler.builtin import GoogleImageCrawler, BingImageCrawler, BaiduImageCrawler, FlickrImageCrawler
@@ -59,22 +61,15 @@ def start_flickr_crawler(path:Path, search_text:str, n_images:int, apikey:str):
     crawler = FlickrImageCrawler(apikey,feeder_threads=2,parser_threads=2,downloader_threads=8,storage={'root_dir': path})
     crawler.crawl(tags=search_text, max_num=n_images, tag_mode='all')
 
-def dedupe_subfolders_images(dir:Path)->dict:
-    """Delete duplicate images from each dir of a parent dir and returns a dict with
-    duplicated images removed from wach dir"""
-    dirs = {}
-    path = Path(dir)
-    for folder in dir.iterdir():
-      if not folder.name.startswith('.'):
-        dirs[folder.name] = dedupe_images(folder)
-    return dirs
-   
 def dedupe_images(image_dir:Path)->int:
-    """Delete duplicate images from image_dir """
+    """Delete duplicate images from image_dir, also works recursively if there are
+    subfolders containing images, OBS: only works in image_files with image extensions"""
+    
+    image_extensions = set(k for k,v in mimetypes.types_map.items() if v.startswith('image/'))
+    
     images = {}; dups = []
-    path = Path(image_dir)
-    for f in path.iterdir():
-      if not Path(f).is_dir():
+    image_files = [y for x in os.walk(image_dir) for ext in image_extensions for y in glob(os.path.join(x[0], f'*{ext}'))]
+    for f in image_files:
         h = hashfile(f)
         if h in images:
             images[h] = images[h] + 1
@@ -83,7 +78,7 @@ def dedupe_images(image_dir:Path)->int:
             images[h] = 1
     n = len(dups)
     for f in dups:
-        f.unlink()
+        Path(f).unlink()
     return n
 
 def hashfile(path:Path)->str:
